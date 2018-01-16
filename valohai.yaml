@@ -1,0 +1,120 @@
+---
+
+- step:
+    name: Run detect on darknet sample images, cli usage example
+    image: valohai/darknet:62b781a-cuda8.0-cudnn5-devel-ubuntu16.04
+    command:
+      - cd /darknet
+      - /darknet/darknet detect /darknet/cfg/yolo.cfg $VH_INPUTS_DIR/yolo-weights/yolo.weights /darknet/data/dog.jpg {parameters}
+      - mv /darknet/predictions.png $VH_OUTPUTS_DIR/dog_prediction.png
+      - /darknet/darknet detect /darknet/cfg/yolo.cfg $VH_INPUTS_DIR/yolo-weights/yolo.weights /darknet/data/person.jpg {parameters}
+      - mv /darknet/predictions.png $VH_OUTPUTS_DIR/person_prediction.png
+      - /darknet/darknet detect /darknet/cfg/yolo.cfg $VH_INPUTS_DIR/yolo-weights/yolo.weights /darknet/data/horses.jpg {parameters}
+      - mv /darknet/predictions.png $VH_OUTPUTS_DIR/horses_prediction.png
+      - /darknet/darknet detect /darknet/cfg/yolo.cfg $VH_INPUTS_DIR/yolo-weights/yolo.weights /darknet/data/eagle.jpg {parameters}
+      - mv /darknet/predictions.png $VH_OUTPUTS_DIR/eagle_prediction.png
+    inputs:
+      - name: yolo-weights
+        default: https://s3-eu-west-1.amazonaws.com/valohai-examples/darknet/yolo.weights
+    parameters:
+      - name: Detection Threshold
+        pass-as: -thresh {v}
+        description: Object detected confidence
+        type: float
+        default: 0.25
+
+- step:
+    name: Run detect on custom image, script usage example
+    image: valohai/darknet:62b781a-cuda8.0-cudnn5-devel-ubuntu16.04
+    command: python detect.py
+    inputs:
+      - name: yolo-weights
+        default: https://s3-eu-west-1.amazonaws.com/valohai-examples/darknet/yolo.weights
+      - name: images
+        default: https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/NYCSub_7_car_exterior.jpg/1280px-NYCSub_7_car_exterior.jpg
+
+- step:
+    name: Generate nightmare image, CLI usage example
+    image: valohai/darknet:62b781a-cuda8.0-cudnn5-devel-ubuntu16.04
+    command:
+      - cd $VH_OUTPUTS_DIR
+      - /darknet/darknet nightmare /darknet/cfg/vgg-conv.cfg $VH_INPUTS_DIR/weights/vgg-conv.weights /darknet/data/scream.jpg {parameters}
+    inputs:
+      - name: weights
+        default: https://s3-eu-west-1.amazonaws.com/valohai-examples/darknet/vgg-conv.weights
+    parameters:
+      - name: Config File Layer
+        pass-as: '{v}'
+        description: The layer of the config file we want to target.
+        type: integer
+        default: 5
+      - name: Rounds
+        pass-as: -rounds {v}
+        description: More rounds means more images generated and usually more change to the original image.
+        type: integer
+        default: 1
+      - name: Iterations
+        pass-as: -iters {v}
+        description: More iterations means more change to the image per round.
+        type: integer
+        default: 10
+      - name: Range
+        pass-as: -range {v}
+        description: If set to one, only the given layer is chosen at every iteration. Otherwise, a layer is chosen randomly within than range (e.g. 10 -range 3 will choose between layers 9-11).
+        type: integer
+        default: 1
+      - name: Octaves
+        pass-as: -octaves {v}
+        description: At one octave, only the full size image is examined. Each additional octave adds a smaller version of the image (3/4 the size of the previous octave).
+        type: integer
+        default: 4
+      - name: Learning Rate
+        pass-as: -rate {v}
+        description: Higher means more change to the image per iteration but also some instability and imprecision.
+        type: float
+        default: 0.05
+      - name: Threshold
+        pass-as: -thresh {v}
+        description: Only features over x standard deviations away from the mean are magnified in the target layer. A higher threshold means fewer features are magnified.
+        type: float
+        default: 1.0
+      - name: Zoom
+        pass-as: -zoom {v}
+        description: You can optionally add a zoom in (x < 1) or zoom out (x > 1) to be applied to the image after each round.
+        type: float
+        default: 1.0
+      - name: Rotate
+        pass-as: -rotate {v}
+        description: Optional rotation after each round.
+        type: float
+        default: 0.0
+
+- step:
+    name: Generate text with RNNs, CLI usage example
+    image: valohai/darknet:62b781a-cuda8.0-cudnn5-devel-ubuntu16.04
+    command:
+      - /darknet/darknet rnn generate /darknet/cfg/rnn.cfg $VH_INPUTS_DIR/rnn-weights/grrm.weights {parameters}
+    inputs:
+      - name: rnn-weights
+        default: https://s3-eu-west-1.amazonaws.com/valohai-examples/darknet/grrm.weights
+    parameters:
+      - name: Text Length
+        pass-as: -len {v}
+        description: change the length of text generated, default 1,000
+        type: integer
+        default: 1000
+      - name: Numeric Seed
+        pass-as: -srand {v}
+        description: seed the random number generator, for repeatable runs
+        type: integer
+        default: 0
+      - name: Textual Seed
+        pass-as: -seed {v}
+        description: seed the RNN with the given string
+        type: string
+        default: seedy seed
+      - name: Sampling Temperature
+        pass-as: -temp {v}
+        description: set the temperature for sampling
+        type: float
+        default: 0.7
